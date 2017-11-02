@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+
+            <div class="md-col-4">
+                <h2>my id</h2><span id="peer-id">to be set</span>
+            </div>
+            <div class="md-col-8">
+                <button disabled type="button" style="width:50%; height:100px;" class="btn btn-default" id="start">start!</button>
+            </div>
+            <div class="md-col-12">
+                <h2>received</h2><span id="received"></span>
+            </div>
+            <div class="md-col-12">
+                <h2>sent</h2><span id="sent"></span>
+            </div>
+
+        </div>
+
+
+
+    </div>
+
+<script src="js/peer.min.js"></script>
+<script src="js/gyronorm.complete.min.js"></script>
+<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="js/bootstrap.min.js"></script>
+
+
+
+<script>
+    var my_id = 'ffr_id'
+
+    function getURLParameter(name) {
+        return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search) || [null, ''])[1].replace(/\+/g, '%20')) || null;
+    }
+
+
+    document.addEventListener("DOMContentLoaded", function(event) {
+        var peer
+        if (getURLParameter('boss') === 'true') {
+            var slaves = {}
+
+            peer = new Peer(my_id, {key: 'd3y014fcaii19k9', debug: 3});
+
+            peer.on('connection', function(conn) {
+                var slave_id = conn.peer
+                if(slaves[slave_id]===undefined){
+                    slaves[slave_id] = conn
+                }
+
+
+
+                conn.on('data', function(data){
+                    $('#received').text(data)
+                    conn.send('received!')
+                    vibrate()
+                });
+            });
+
+
+        }
+        else {
+
+
+            peer = new Peer({key: 'd3y014fcaii19k9', debug: 3});
+
+            $("#peer-id").text(peer['id'])
+            var conn = peer.connect(my_id, {reliable: true});
+
+            conn.on('open', function () {
+                // Receive messages
+                conn.on('data', function (data) {
+                    vibrate()
+                    $('#received').text(data)
+                });
+                $('#start').prop('disabled', false).click(function(){
+
+                    send('hello!')
+                })
+
+            });
+
+            function send(txt){
+                $('#sent').text(txt)
+                conn.send(txt);
+            }
+        }
+
+        peer.on('open', function(id) {
+            $('#peer-id').text(id)
+        })
+    })
+</script>
+
+<script>
+
+    function vibrate() {
+console.log('33')
+        // Vibrate for 1 second (1000 milliseconds).
+
+        // Vibrate in sequence.
+        var sos=". . . - - - . . ."
+        var pattern = sos.split("").map(function(s){
+            if(s==='-') return 200
+            else if(s==='-')  return 50
+            else return 50
+        })
+        navigator.vibrate(pattern)
+    }
+
+</script>
+
+<script>
+    function orientation_init() {
+
+        // Check to make sure the browser supprots DeviceOrientationEvents
+        if (window.DeviceOrientationEvent) {
+            // Create an event listener
+            window.addEventListener('deviceorientation', function (event) {
+                // Get the left-to-right tilt (in degrees).
+                var tiltLR = event.gamma;
+
+                // Get the front-to-back tilt (in degrees).
+                var titleFB = event.beta;
+
+                // Get the direction of the device (in degrees).
+                var direction = event.alpha;
+            });
+        }
+    }
+</script>
+
+<script>
+    function light_init() {
+        window.addEventListener('devicelight', function (event) {
+            // Get the ambient light level in lux.
+            var lightLevel = event.value;
+        });
+    }
+</script>
+
+<script>
+    function gyro(){
+        var gn = new GyroNorm();
+
+        gn.init().then(function(){
+            gn.start(function(data){
+                // Process:
+                // data.do.alpha	( deviceorientation event alpha value )
+                // data.do.beta		( deviceorientation event beta value )
+                // data.do.gamma	( deviceorientation event gamma value )
+                // data.do.absolute	( deviceorientation event absolute value )
+
+                // data.dm.x		( devicemotion event acceleration x value )
+                // data.dm.y		( devicemotion event acceleration y value )
+                // data.dm.z		( devicemotion event acceleration z value )
+
+                // data.dm.gx		( devicemotion event accelerationIncludingGravity x value )
+                // data.dm.gy		( devicemotion event accelerationIncludingGravity y value )
+                // data.dm.gz		( devicemotion event accelerationIncludingGravity z value )
+
+                // data.dm.alpha	( devicemotion event rotationRate alpha value )
+                // data.dm.beta		( devicemotion event rotationRate beta value )
+                // data.dm.gamma	( devicemotion event rotationRate gamma value )
+            });
+        }).catch(function(e){
+            // Catch if the DeviceOrientation or DeviceMotion is not supported by the browser or device
+        });
+    }
+</script>
+
+</body>
+</html>
